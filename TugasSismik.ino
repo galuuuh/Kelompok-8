@@ -80,8 +80,8 @@ void loop() {
       }
   }else{
     lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("TIDAK ADA BAHAYA");
+    lcd.setCursor(3, 0);
+    lcd.print("HARI MASIH CERAH");
     digitalWrite(Keluaran, 0);
     delay(20);
   }
