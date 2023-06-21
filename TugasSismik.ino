@@ -1,89 +1,66 @@
 #include <Servo.h>
-#include <LiquidCrystal_I2C.h>
-Servo CCTV;
-const int kecepatan = 3;
-const int pinTrigger = 10;
-const int pinEcho = 11;
+Servo myservo;
+const int PinTrigger = 10;
+const int PinEcho = 11;
 const int Keluaran = 8;
-const int vcc = 5;
-const int gnd = 7;
 float durasi, jarak;
+bool bergerak = 1;
 int posisi = 0;
-bool bergerak = 0;
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+int SensorCahaya = analogRead(A0);
 
 void setup() {
-  pinMode(pinTrigger, OUTPUT);
-  pinMode(pinEcho, INPUT);
+  pinMode(PinTrigger, OUTPUT);
+  pinMode(PinEcho, INPUT);
   pinMode(Keluaran, OUTPUT);
-  pinMode(vcc, OUTPUT);
-  pinMode(gnd, OUTPUT);
-  digitalWrite(vcc, 1);
-  digitalWrite(gnd, 0);
-  CCTV.attach(12);
-  lcd.init();
-  lcd.backlight();
-  Serial.begin(9600);
+  myservo.attach(12);
 }
 
 void loop() {
-  // Ultrasonic dengan centimeter
-  digitalWrite(pinTrigger, LOW);
-  delayMicroseconds(2);
-  digitalWrite(pinTrigger, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(pinTrigger, LOW);
 
-  durasi = pulseIn(pinEcho, HIGH);
+  digitalWrite(Keluaran, 0);
+
+  //Membuat sensor ULtrasonic mengukur dalam satuan cm
+  digitalWrite(PinTrigger, LOW);
+  delayMicroseconds(2);
+  digitalWrite(PinTrigger, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(PinTrigger, LOW);
+
+  durasi = pulseIn(PinEcho, HIGH);
   jarak = (durasi*.0343)/2;
   Serial.print("Jarak : ");
   Serial.println(jarak);
-  
-  //Mendeteksi cahaya
-  int sensorCahaya = analogRead(A0);
-  Serial.println(sensorCahaya);
 
-  // Simulasi pergerakan CCTV
-  if(sensorCahaya < 200){
-    if(jarak < 10){                 // Ketika  ada benda sejauh 10cm dari sensor maka sensor akan berbunyi
-        digitalWrite(Keluaran, 1);
-        lcd.clear();
-        lcd.setCursor(0,0);
-        lcd.print("ADA MALING!!!");
-        lcd.setCursor(0, 1);
-        lcd.print("Jarak");
-        lcd.print(jarak);
-        CCTV.write(posisi);
-      }else{                        // Ketika tidak ada benda maka sensor akan terus bergerak
-        lcd.clear();
-        lcd.print("TIDAK ADA MALING...");
-        digitalWrite(Keluaran, 0);
-        if(bergerak == 0){
-          if(posisi != 0){
-            posisi -= kecepatan;
-            CCTV.write(posisi);
-          }else if(posisi == 0){
-            posisi += kecepatan;
-            CCTV.write(posisi);
-            bergerak = 1;
-          }
-        }else{
-          if(posisi != 180){
-            posisi += kecepatan;
-            CCTV.write(posisi);
-          }else if(posisi == 180){
-            posisi -= kecepatan;
-            CCTV.write(posisi);
-            bergerak = 0;
-          }
+  //Membuat program aktif jika sensor cahaya mengukur < 200 atau masuk dalam keadaan gelap
+  if(SensorCahaya < 200){
+    if(jarak < 10){
+      // Jika sensor ultrasonic mendeteksi ada bedan didepannya sejauh < 10 cm maka keluaran akan HIGH
+      digitalWrite(Keluaran, 1);
+    }else{
+      // Jika sensor ultrasonic tidak mendeteksi servo akan bergerak dengan kode dibawah
+      digitalWrite(Keluaran, 0);
+      if(bergerak == 1){
+        if(posisi += 0){
+          posisi -= 30;
+          myservo.write(posisi);
+        }else if(posisi == 0){
+          posisi += 30;
+          myservo.write(posisi);
+          bergerak = 0;
+        }
+      }else{
+        if(posisi != 180){
+          posisi += 30;
+          myservo.write(posisi);
+        }else if(posisi == 180){
+          posisi -= 30;
+          myservo.write(posisi);
+          bergerak = 1;
         }
       }
+    }
   }else{
-    lcd.clear();
-    lcd.setCursor(3, 0);
-    lcd.print("HARI MASIH CERAH");
     digitalWrite(Keluaran, 0);
     delay(20);
   }
-  
 }
